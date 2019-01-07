@@ -22,7 +22,11 @@ namespace MySchool.Controllers
         // GET: Course
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Courses.ToListAsync());
+            var courses = _context.Courses
+                .Include(c => c.Department)
+                .AsNoTracking();
+
+            return View(await courses.ToListAsync());
         }
 
         // GET: Course/Details/5
@@ -62,6 +66,7 @@ namespace MySchool.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+
             return View(course);
         }
 
@@ -78,6 +83,7 @@ namespace MySchool.Controllers
             {
                 return NotFound();
             }
+
             return View(course);
         }
 
@@ -111,8 +117,10 @@ namespace MySchool.Controllers
                         throw;
                     }
                 }
+
                 return RedirectToAction(nameof(Index));
             }
+
             return View(course);
         }
 
