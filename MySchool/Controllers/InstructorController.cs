@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using MySchool.Data;
 using MySchool.Models;
+using MySchool.Models.ViewModels;
 
 namespace MySchool.Controllers
 {
@@ -20,9 +21,39 @@ namespace MySchool.Controllers
         }
 
         // GET: Instructor
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? id, int? courseID)
         {
-            return View(await _context.Instructors.ToListAsync());
+            var viewModel = new InstructorIndexViewModel();
+
+            viewModel.Instructors = await _context.Instructors
+                .Include(i => i.OfficeAssignment)
+                .Include(i => i.CourseAssignments)
+                .ThenInclude(ca => ca.Course)
+                .ThenInclude(c => c.Department)
+                .OrderBy(i => i.LastName)
+                .ToListAsync();
+
+            if (id != null)
+            {
+                ViewData["InstructorID"] = id.Value;
+                var instructor = viewModel.Instructors.Single(i => i.ID == id.Value);
+                viewModel.Courses = instructor.CourseAssignments.Select(ca => ca.Course);
+            }
+
+            if (courseID != null)
+            {
+                ViewData["CourseID"] = courseID.Value;
+                var course = viewModel.Courses.Single(x => x.CourseID == courseID);
+                await _context.Entry(course).Collection(c => c.Enrollments).LoadAsync();
+                foreach (var enrollment in course.Enrollments)
+                {
+                    await _context.Entry(enrollment).Reference(e => e.Student).LoadAsync();
+                }
+
+                viewModel.Enrollments = course.Enrollments;
+            }
+
+            return View(viewModel);
         }
 
         // GET: Instructor/Details/5
@@ -54,7 +85,8 @@ namespace MySchool.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ID,LastName,FirstMidName,HireDate")] Instructor instructor)
+        public async Task<IActionResult> Create([Bind("ID,LastName,FirstMidName,HireDate")]
+            Instructor instructor)
         {
             if (ModelState.IsValid)
             {
@@ -62,6 +94,7 @@ namespace MySchool.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+
             return View(instructor);
         }
 
@@ -78,6 +111,7 @@ namespace MySchool.Controllers
             {
                 return NotFound();
             }
+
             return View(instructor);
         }
 
@@ -86,7 +120,8 @@ namespace MySchool.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ID,LastName,FirstMidName,HireDate")] Instructor instructor)
+        public async Task<IActionResult> Edit(int id, [Bind("ID,LastName,FirstMidName,HireDate")]
+            Instructor instructor)
         {
             if (id != instructor.ID)
             {
@@ -111,8 +146,10 @@ namespace MySchool.Controllers
                         throw;
                     }
                 }
+
                 return RedirectToAction(nameof(Index));
             }
+
             return View(instructor);
         }
 

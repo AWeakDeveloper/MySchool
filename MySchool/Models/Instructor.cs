@@ -26,7 +26,8 @@ namespace MySchool.Models
 
         [Display(Name = "Full Name")] public string FullName => LastName + ", " + FirstMidName;
 
-        public ICollection<CourseAssignment> CourseAssignments { get; set; }
-        public OfficeAssignment OfficeAssignment { get; set; }
+        [Display(Name = "Courses")] public ICollection<CourseAssignment> CourseAssignments { get; set; }
+        
+        [Display(Name = "Office")] public OfficeAssignment OfficeAssignment { get; set; }
     }
 }

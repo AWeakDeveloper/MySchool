@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -7,6 +8,7 @@ namespace MySchool.Models
     public class Course
     {
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
+        [DisplayName("Number")]
         public int CourseID { get; set; }
 
         [StringLength(50, MinimumLength = 3)] public string Title { get; set; }
