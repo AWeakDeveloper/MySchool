@@ -26,6 +26,7 @@ namespace MySchool
                 {
                     var context = serviceProvider.GetRequiredService<SchoolContext>();
                     context.Database.Migrate();
+                    SeedData.Initialize(context);
                 }
                 catch (Exception e)
                 {
