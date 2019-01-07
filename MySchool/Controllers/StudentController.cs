@@ -17,9 +17,30 @@ namespace MySchool.Controllers
         }
 
         // GET: Student
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string sortOrder)
         {
-            return View(await _context.Students.ToListAsync());
+            ViewData["NameSortParam"] = string.IsNullOrEmpty(sortOrder) ? "nameDesc" : "";
+            ViewData["DateSortParam"] = sortOrder == "dateAsc" ? "dateDesc" : "dateAsc";
+
+            var students = _context.Students.AsQueryable();
+
+            switch (sortOrder)
+            {
+                case "dateAsc":
+                    students = students.OrderBy(s => s.EnrollmentDate);
+                    break;
+                case "dateDesc":
+                    students = students.OrderByDescending(s => s.EnrollmentDate);
+                    break;
+                case "nameDesc":
+                    students = students.OrderByDescending(s => s.LastName);
+                    break;
+                default:
+                    students = students.OrderBy(s => s.LastName);
+                    break;
+            }
+
+            return View(await students.AsNoTracking().ToListAsync());
         }
 
         // GET: Student/Details/5
