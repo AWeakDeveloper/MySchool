@@ -2,6 +2,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using MySchool.Data;
 using MySchool.Models;
 
@@ -10,18 +11,31 @@ namespace MySchool.Controllers
     public class StudentController : Controller
     {
         private readonly SchoolContext _context;
+        private readonly int _pageSize;
 
-        public StudentController(SchoolContext context)
+        public StudentController(SchoolContext context, IConfiguration configuration)
         {
             _context = context;
+            _pageSize = configuration.GetValue("PageSize", 5);
         }
 
         // GET: Student
-        public async Task<IActionResult> Index(string sortOrder, string searchString)
+        public async Task<IActionResult> Index(string sortOrder, string currentFilter, string searchString, int? page)
         {
+            ViewData["CurrentSort"] = sortOrder;
             ViewData["NameSortParam"] = string.IsNullOrEmpty(sortOrder) ? "nameDesc" : "";
             ViewData["DateSortParam"] = sortOrder == "dateAsc" ? "dateDesc" : "dateAsc";
-            ViewData["CurrentFilter"] = string.IsNullOrEmpty(searchString) ? "" : searchString;
+
+            if (searchString != null)
+            {
+                page = 1;
+            }
+            else
+            {
+                searchString = currentFilter;
+            }
+
+            ViewData["CurrentFilter"] = searchString;
 
             var students = _context.Students.AsQueryable();
 
@@ -47,7 +61,7 @@ namespace MySchool.Controllers
                     break;
             }
 
-            return View(await students.AsNoTracking().ToListAsync());
+            return View(await PaginatedList<Student>.CreateAsync(students.AsNoTracking(), page ?? 1, _pageSize));
         }
 
         // GET: Student/Details/5

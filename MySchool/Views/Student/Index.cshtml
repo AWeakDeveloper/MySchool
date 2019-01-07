@@ -1,4 +1,4 @@
-@model IEnumerable<MySchool.Models.Student>
+@model MySchool.Models.PaginatedList<MySchool.Models.Student>
 
 @{
     ViewData["Title"] = "Index";
@@ -19,9 +19,7 @@
             <button type="submit" class="btn btn-primary">
                 Search
             </button>
-            <button type="button" class="btn btn-link" onclick="window.location.href = '@Url.Action("Index")'">
-                Back to full list
-            </button>
+            <a class="btn btn-link" asp-action="Index">Back to full list</a>
         </div>
     </div>
 </form>
@@ -31,15 +29,15 @@
     <tr>
         <th>
             <a asp-action="Index" asp-route-sortOrder="@ViewData["NameSortParam"]" asp-route-searchString="@ViewData["CurrentFilter"]">
-                @Html.DisplayNameFor(model => model.LastName)
+                @Html.DisplayNameFor(model => model[0].LastName)
             </a>
         </th>
         <th>
-            @Html.DisplayNameFor(model => model.FirstMidName)
+            @Html.DisplayNameFor(model => model[0].FirstMidName)
         </th>
         <th>
             <a asp-action="Index" asp-route-sortOrder="@ViewData["DateSortParam"]" asp-route-searchString="@ViewData["CurrentFilter"]">
-                @Html.DisplayNameFor(model => model.EnrollmentDate)
+                @Html.DisplayNameFor(model => model[0].EnrollmentDate)
             </a>
         </th>
         <th></th>
@@ -67,3 +65,23 @@
     }
     </tbody>
 </table>
+
+@{
+    var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
+    var nextDisabled = !Model.HasNextPage ? "disabled" : "";
+}
+
+<a asp-action="Index"
+   asp-route-sortOrder="@ViewData["CurrentSort"]"
+   asp-route-page="@(Model.PageIndex - 1)"
+   asp-route-currentFilter="@ViewData["CurrentFilter"]"
+   class="btn btn-outline-primary @prevDisabled">
+    Previous
+</a>
+<a asp-action="Index"
+   asp-route-sortOrder="@ViewData["CurrentSort"]"
+   asp-route-page="@(Model.PageIndex + 1)"
+   asp-route-currentFilter="@ViewData["CurrentFilter"]"
+   class="btn btn-outline-primary @nextDisabled">
+    Next
+</a>
