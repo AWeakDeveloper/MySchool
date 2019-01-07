@@ -17,12 +17,19 @@ namespace MySchool.Controllers
         }
 
         // GET: Student
-        public async Task<IActionResult> Index(string sortOrder)
+        public async Task<IActionResult> Index(string sortOrder, string searchString)
         {
             ViewData["NameSortParam"] = string.IsNullOrEmpty(sortOrder) ? "nameDesc" : "";
             ViewData["DateSortParam"] = sortOrder == "dateAsc" ? "dateDesc" : "dateAsc";
+            ViewData["CurrentFilter"] = string.IsNullOrEmpty(searchString) ? "" : searchString;
 
             var students = _context.Students.AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                students = students.Where(
+                    s => s.LastName.Contains(searchString) || s.FirstMidName.Contains(searchString));
+            }
 
             switch (sortOrder)
             {
