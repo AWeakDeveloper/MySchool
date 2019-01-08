@@ -1,10 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.CodeAnalysis.Operations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using MySchool.Data;
 using MySchool.Models;
 using MySchool.Models.ViewModels;
@@ -13,10 +18,19 @@ namespace MySchool.Controllers
 {
     public class InstructorController : Controller
     {
+        private string _pictureFolder;
         private readonly SchoolContext _context;
 
-        public InstructorController(SchoolContext context)
+        public InstructorController(SchoolContext context, IHostingEnvironment env, IConfiguration config)
         {
+            _pictureFolder = config.GetValue<string>("Instructors");
+            if (string.IsNullOrEmpty(_pictureFolder))
+                _pictureFolder = Path.Join(env.ContentRootPath, "Storage");
+
+            _pictureFolder = Path.GetFullPath(_pictureFolder);
+            if (!Directory.Exists(_pictureFolder))
+                Directory.CreateDirectory(_pictureFolder);
+
             _context = context;
         }
 
@@ -73,6 +87,47 @@ namespace MySchool.Controllers
 
             return View(instructor);
         }
+
+        public async Task<IActionResult> Picture(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var instructor = await _context.Instructors
+                .FirstOrDefaultAsync(m => m.ID == id);
+            if (instructor == null)
+            {
+                return NotFound();
+            }
+
+            var imagePath = Path.Join(_pictureFolder, $"{id}.jpg");
+            if (!System.IO.File.Exists(imagePath))
+                return NotFound();
+
+            var image = System.IO.File.OpenRead(imagePath);
+            return File(image, "image/jpeg");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Picture(int? id, [Bind("ID")] Instructor instructor, IFormFile image)
+        {
+            if (id != instructor.ID)
+            {
+                return NotFound();
+            }
+
+            var imagePath = Path.Join(_pictureFolder, $"{id}.jpg");
+            using (var stream = new FileStream(imagePath, FileMode.Create))
+            {
+                await image.CopyToAsync(stream);
+            }
+
+            return RedirectToAction(nameof(Edit), new {id});
+        }
+
 
         // GET: Instructor/Create
         public IActionResult Create()
