@@ -25,7 +25,6 @@ namespace MySchool.Controllers
             var courses = _context.Courses
                 .Include(c => c.Department)
                 .AsNoTracking();
-
             return View(await courses.ToListAsync());
         }
 
@@ -38,6 +37,8 @@ namespace MySchool.Controllers
             }
 
             var course = await _context.Courses
+                .Include(c => c.Department)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.CourseID == id);
             if (course == null)
             {
@@ -50,6 +51,10 @@ namespace MySchool.Controllers
         // GET: Course/Create
         public IActionResult Create()
         {
+            ViewData["DepartmentID"] =
+                new SelectList(_context.Departments.AsNoTracking(),
+                    nameof(Department.DepartmentID),
+                    nameof(Department.Name));
             return View();
         }
 
@@ -58,7 +63,8 @@ namespace MySchool.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("CourseID,Title,Credits")] Course course)
+        public async Task<IActionResult> Create([Bind("CourseID,Title,Credits,DepartmentID")]
+            Course course)
         {
             if (ModelState.IsValid)
             {
@@ -67,6 +73,11 @@ namespace MySchool.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            ViewData["DepartmentID"] =
+                new SelectList(_context.Departments.AsNoTracking(),
+                    nameof(Department.DepartmentID),
+                    nameof(Department.Name),
+                    course.DepartmentID);
             return View(course);
         }
 
@@ -84,6 +95,11 @@ namespace MySchool.Controllers
                 return NotFound();
             }
 
+            ViewData["DepartmentID"] =
+                new SelectList(_context.Departments.AsNoTracking(),
+                    nameof(Department.DepartmentID),
+                    nameof(Department.Name),
+                    course.DepartmentID);
             return View(course);
         }
 
@@ -92,7 +108,8 @@ namespace MySchool.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("CourseID,Title,Credits")] Course course)
+        public async Task<IActionResult> Edit(int id, [Bind("CourseID,Title,Credits,DepartmentID")]
+            Course course)
         {
             if (id != course.CourseID)
             {
@@ -121,6 +138,11 @@ namespace MySchool.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            ViewData["DepartmentID"] =
+                new SelectList(_context.Departments.AsNoTracking(),
+                    nameof(Department.DepartmentID),
+                    nameof(Department.Name),
+                    course.DepartmentID);
             return View(course);
         }
 
@@ -133,6 +155,7 @@ namespace MySchool.Controllers
             }
 
             var course = await _context.Courses
+                .Include(c => c.Department)
                 .FirstOrDefaultAsync(m => m.CourseID == id);
             if (course == null)
             {
